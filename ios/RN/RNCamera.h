@@ -34,6 +34,7 @@
 @property (nonatomic, assign) BOOL isDetectingFaces;
 @property(assign, nonatomic) AVVideoCodecType videoCodecType;
 @property (assign, nonatomic) AVCaptureVideoStabilizationMode videoStabilizationMode;
+@property (nonatomic, assign) BOOL barCodeImageCaptured; 
 
 - (id)initWithBridge:(RCTBridge *)bridge;
 - (void)updateType;
@@ -57,6 +58,7 @@
 - (void)onMountingError:(NSDictionary *)event;
 - (void)onCodeRead:(NSDictionary *)event;
 - (void)onFacesDetected:(NSDictionary *)event;
+- (void)onCodePhoto:(NSDictionary *)event;
 - (void)onPictureSaved:(NSDictionary *)event;
 
 @end

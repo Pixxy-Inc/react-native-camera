@@ -82,6 +82,7 @@ type PropsType = typeof View.props & {
   type?: number | string,
   onCameraReady?: Function,
   onBarCodeRead?: Function,
+  onBarCodePhoto?: Function,
   onPictureSaved?: Function,
   onGoogleVisionBarcodesDetected?: Function,
   faceDetectionMode?: number,
@@ -300,6 +301,12 @@ export default class Camera extends React.Component<PropsType, StateType> {
   _onCameraReady = () => {
     if (this.props.onCameraReady) {
       this.props.onCameraReady();
+    }
+  };
+
+  _onPictureSaved = ({ nativeEvent }) => {
+    if (this.props.onPictureSaved) {
+      this.props.onPictureSaved(nativeEvent);
     }
   };
 

@@ -86,6 +86,13 @@ static NSDictionary *defaultFaceDetectorOptions = nil;
     }
 }
 
+- (void)onCodePhoto:(NSDictionary *)event
+{
+    if (_onBarCodePhoto) {
+        _onBarCodePhoto(event);
+    }
+}
+
 - (void)onPictureSaved:(NSDictionary *)event
 {
     if (_onPictureSaved) {
@@ -722,6 +729,7 @@ static NSDictionary *defaultFaceDetectorOptions = nil;
             [metadataOutput setMetadataObjectsDelegate:self queue:self.sessionQueue];
             [self.session addOutput:metadataOutput];
             self.metadataOutput = metadataOutput;
+            self.barCodeImageCaptured = NO;
         }
     } else if (_metadataOutput != nil && ![self isReadingBarCodes]) {
         [self.session removeOutput:_metadataOutput];
@@ -756,6 +764,34 @@ static NSDictionary *defaultFaceDetectorOptions = nil;
             AVMetadataMachineReadableCodeObject *codeMetadata = (AVMetadataMachineReadableCodeObject *) metadata;
             for (id barcodeType in self.barCodeTypes) {
                 if ([metadata.type isEqualToString:barcodeType]) {
+
+                    AVCaptureDevice *device = [[self videoCaptureDeviceInput] device];
+                        
+                    if (!self.barCodeImageCaptured && !device.isAdjustingFocus) {
+                        self.barCodeImageCaptured = YES;
+                        // Capture a photo immediately after scanning bar code
+                        [self.stillImageOutput captureStillImageAsynchronouslyFromConnection:[self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo] 
+                            completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
+                            if (imageDataSampleBuffer) {
+                                NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
+                                UIImage *image = [[UIImage alloc] initWithData:imageData];
+                                // save to camera roll for testing
+                                // [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:nil completionBlock:^(NSURL* url, NSError* error) {}];
+                                // Save image to disk and grab the file path
+                                NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+                                NSString *documentsDirectory = [paths firstObject];
+                                NSFileManager *fileManager = [NSFileManager defaultManager];
+                                NSString *fullPath = [[documentsDirectory stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]] stringByAppendingPathExtension:@"jpg"];
+                                [fileManager createFileAtPath:fullPath contents:imageData attributes:nil];
+                                NSDictionary *event = @{
+                                    @"data": fullPath,
+                                };
+                                // Send saved image's file path to callback through the event "CameraBarCodePhoto"
+                                [self onCodePhoto:event];
+                            }
+                        }];
+                    }
+                    
                     AVMetadataMachineReadableCodeObject *transformed = (AVMetadataMachineReadableCodeObject *)[_previewLayer transformedMetadataObjectForMetadataObject:metadata];
                     NSDictionary *event = @{
                                             @"type" : codeMetadata.type,

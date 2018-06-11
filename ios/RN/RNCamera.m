@@ -725,7 +725,6 @@ static NSDictionary *defaultFaceDetectorOptions = nil;
                 NSDictionary *event = @{
                     @"data": fullPath,
                 };
-                RCTLogWarn(@"_onBarCodePhoto True 787 step_1");
                 // Send saved image's file path to callback through the event "CameraBarCodePhoto"
                 [self onCodePhoto:event];
             }
